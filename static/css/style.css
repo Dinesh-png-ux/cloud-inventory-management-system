@@ -1,0 +1,150 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 30px;
+    color: #222;
+}
+
+h1 {
+    color: #17365d;
+}
+
+.dashboard {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+.card {
+    background-color: white;
+    padding: 22px;
+    border-radius: 10px;
+    min-width: 180px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+    font-size: 16px;
+    color: #555;
+}
+
+.card p {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+
+input {
+    padding: 10px;
+    width: 260px;
+    max-width: 90%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    background-color: #17365d;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #24558a;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #17365d;
+    color: white;
+}
+
+.alert {
+    background-color: #ffe5e5;
+    color: #a40000;
+    border: 1px solid #ffb3b3;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+}
+
+.success {
+    background-color: #e5f7e9;
+    color: #176b2c;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.low-stock-row {
+    background-color: #fff0f0;
+}
+
+.low-stock-label {
+    color: #b00020;
+    font-weight: bold;
+}
+
+.in-stock-label {
+    color: #176b2c;
+    font-weight: bold;
+}
+
+.message {
+    background-color: #e5f0ff;
+    padding: 12px;
+    border-radius: 5px;
+}
+
+select {
+    padding: 10px;
+    min-width: 260px;
+    max-width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.out-of-stock {
+    color: #dc2626;
+    background-color: #fee2e2;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.low-stock {
+    color: #b45309;
+    background-color: #fef3c7;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.in-stock {
+    color: #15803d;
+    background-color: #dcfce7;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+

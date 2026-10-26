@@ -1,0 +1,414 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        html {
+            scroll-behavior: auto;
+        }
+
+        .delete-button {
+            background-color: #b00020;
+            padding: 8px 12px;
+        }
+
+        .delete-button:hover {
+            background-color: #850018;
+        }
+
+        .search-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .out-of-stock {
+            color: #dc2626;
+            background-color: #fee2e2;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .low-stock-label {
+            color: #b45309;
+            background-color: #fef3c7;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .in-stock-label {
+            color: #15803d;
+            background-color: #dcfce7;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .out-of-stock-row {
+            background-color: #fff1f2;
+        }
+
+        .low-stock-row {
+            background-color: #fffbeb;
+        }
+
+
+
+.popup-message {
+    position: fixed !important;
+    top: 20px !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translateX(-50%) !important;
+    background-color: #28a745;
+    color: white;
+    padding: 15px 28px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 99999;
+    font-size: 16px;
+    text-align: center;
+    animation: popupFade 3.5s forwards;
+}
+
+@keyframes popupFade {
+    0%, 75% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+    </style>
+</head>
+
+<body>
+    <h1>Inventory Management System</h1>
+    
+<div class="user-info">
+    <p>
+        Logged in as: <strong>{{ session.get('username') }}</strong>
+        | Role: <strong>{{ session.get('role')|capitalize }}</strong>
+    </p>
+
+    <form method="POST" action="{{ url_for('logout') }}">
+        <button type="submit">Logout</button>
+    </form>
+{% if session.get('role') == 'admin' %}
+<p>
+    <a href="{{ url_for('manage_users') }}">User Management</a>
+</p>
+{% endif %}
+</div>
+
+    <p>Cloud-Based Inventory Monitoring and Management System</p>
+
+    
+{% for message in get_flashed_messages() %}
+    <div class="popup-message">{{ message }}</div>
+{% endfor %}
+
+
+    <h2>Dashboard</h2>
+
+    <div class="dashboard">
+        <div class="card">
+            <h2>Total Products</h2>
+            <p>{{ total_products }}</p>
+        </div>
+
+        <div class="card">
+            <h2>Low Stock Items</h2>
+            <p>{{ low_stock_items }}</p>
+        </div>
+        <div class="card">
+           <h2>Out of Stock Items</h2>
+           <p>{{ out_of_stock_items }}</p>
+        </div>
+
+        <div class="card">
+            <h2>Stock Transactions</h2>
+            <p>{{ total_transactions }}</p>
+        </div>
+    </div>
+
+    
+<h2>Low Stock Alerts</h2>
+
+{% set alert_products = products | selectattr('quantity', 'le', 0) | list %}
+
+{% if low_stock_items > 0 %}
+    <div class="alert">
+        <strong>Warning!</strong>
+        The following products need attention:
+
+        <ul>
+            {% for product in products %}
+                {% if product.quantity == 0 %}
+                    <li>
+                        <strong>{{ product.name }}</strong>
+                        — <span class="out-of-stock">OUT OF STOCK</span>
+                    </li>
+                {% elif product.quantity <= product.low_stock_threshold %}
+                    <li>
+                        <strong>{{ product.name }}</strong>
+                        — <span class="low-stock-label">LOW STOCK</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+{% else %}
+    <p class="success">All products are above their low-stock thresholds.</p>
+{% endif %}
+
+    {% if session.get('role') == 'admin' %}
+    <h2>Add New Product</h2>
+
+    <form action="{{ url_for('add_product') }}" method="POST">
+        <p>
+            Product Name<br>
+            <input type="text" name="name" required>
+        </p>
+
+        <p>
+            Initial Quantity<br>
+            <input type="number" name="quantity" min="0" value="0" required>
+        </p>
+
+        <p>
+            Low Stock Threshold<br>
+            <input type="number" name="threshold" min="0" value="10" required>
+        </p>
+
+        <button type="submit">Add Product</button>
+    </form>
+    {% endif %}
+
+    <h2>Stock In / Stock Out</h2>
+
+    {% if products %}
+        <form action="{{ url_for('update_stock') }}" method="POST">
+            <p>
+                Select Product<br>
+                <select name="product_id" required>
+                    {% for product in products %}
+                        <option value="{{ product.id }}">
+                            {{ product.name }} (Current stock: {{ product.quantity }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <p>
+                Action<br>
+                <select name="action" required>
+                    <option value="STOCK_IN">Stock In — Add stock</option>
+                    <option value="STOCK_OUT">Stock Out — Remove stock</option>
+                </select>
+            </p>
+
+            <p>
+                Quantity<br>
+                <input type="number" name="quantity" min="1" required>
+            </p>
+
+            <button type="submit">Update Stock</button>
+        </form>
+    {% else %}
+        <p>Add a product first to manage its stock.</p>
+    {% endif %}
+
+    <h2>Product Inventory</h2>
+
+    <form action="{{ url_for('dashboard') }}" method="GET" id="search-form">
+        <div class="search-controls">
+            <input
+                type="text"
+                name="search"
+                id="search-input"
+                placeholder="Search product name..."
+                value="{{ search }}"
+            >
+
+            <button type="submit">Search</button>
+           
+<a href="{{ url_for('dashboard') }}" id="show-all-link">Show All</a>
+
+        </div>
+    </form>
+
+    {% if products %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Threshold</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+
+            {% for product in products %}
+                <tr class="{% if product.quantity == 0 %}out-of-stock-row{% elif product.quantity <= product.low_stock_threshold %}low-stock-row{% endif %}">
+                    <td>{{ product.id }}</td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.low_stock_threshold }}</td>
+
+                    <td>
+                        {% if product.quantity == 0 %}
+                            <span class="out-of-stock">OUT OF STOCK</span>
+                        {% elif product.quantity <= product.low_stock_threshold %}
+                            <span class="low-stock-label">LOW STOCK</span>
+                        {% else %}
+                            <span class="in-stock-label">IN STOCK</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+			{% if session.get('role') == 'admin' %}
+                        <form
+                            action="{{ url_for('delete_product') }}"
+                            method="POST"
+                            onsubmit="return confirm('Are you sure you want to delete {{ product.name|e }}? This action cannot be undone.');"
+                        >
+                            <input
+                                type="hidden"
+                                name="product_id"
+                                value="{{ product.id }}"
+                            >
+                            <button type="submit" class="delete-button">
+                                Delete
+                            </button>
+                        </form>
+			{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No matching products found.</p>
+    {% endif %}
+
+    
+<h2>Stock Transaction History</h2>
+
+<form action="{{ url_for('dashboard') }}" method="GET" class="search-controls" id="transaction-filter-form">    
+
+    <label for="period">Show transactions:</label>
+
+    <select name="period" id="period" onchange="toggleDateFields()">
+        <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+        <option value="yesterday" {% if period == 'yesterday' %}selected{% endif %}>Yesterday</option>
+        <option value="7days" {% if period == '7days' %}selected{% endif %}>Last 7 Days</option>
+        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Select Date Range</option>
+    </select>
+
+    <span id="date-fields" style="display: {% if period == 'custom' %}inline-flex{% else %}none{% endif %}; gap: 8px; flex-wrap: wrap;">
+        <label for="from_date">From:</label>
+        <input type="date" name="from_date" id="from_date" value="{{ from_date }}">
+
+        <label for="to_date">To:</label>
+        <input type="date" name="to_date" id="to_date" value="{{ to_date }}">
+    </span>
+
+    <input type="hidden" name="search" value="{{ search }}">
+    <button type="submit">Show Records</button>
+</form>
+
+{% if transactions %}
+    <p>Total transactions shown: {{ transactions|length }}</p>
+
+    <table>
+        <tr>
+            <th>Product</th>
+            <th>Transaction</th>
+            <th>Quantity</th>
+            <th>Date &amp; Time (IST)</th>
+        </tr>
+
+        {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction["product_name"] or 'Unknown product' }}</td>
+                <td>{{ transaction["transaction_type"] }}</td>
+                <td>{{ transaction["quantity"] }}</td>
+                <td>{{ transaction["created_at"] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No transactions found for the selected period.</p>
+{% endif %}
+
+<script>
+    function toggleDateFields() {
+        const period = document.getElementById("period").value;
+        const dateFields = document.getElementById("date-fields");
+
+        dateFields.style.display =
+            period === "custom" ? "inline-flex" : "none";
+    }
+</script>
+
+
+    
+<script>
+    const scrollKey = "inventoryPageScroll";
+
+    // Save scroll position before submitting forms
+    const formsToPreserveScroll = document.querySelectorAll(
+        '#search-form, #transaction-filter-form, form[action*="delete-product"], form[action*="add-product"], form[action*="update-stock"]'
+    );
+
+    formsToPreserveScroll.forEach(function (form) {
+        form.addEventListener("submit", function () {
+            sessionStorage.setItem(
+                scrollKey,
+                String(window.scrollY)
+            );
+        });
+    });
+
+    // Preserve scroll position when Show All is clicked
+    const showAllLink = document.getElementById("show-all-link");
+
+    if (showAllLink) {
+        showAllLink.addEventListener("click", function () {
+            sessionStorage.setItem(
+                scrollKey,
+                String(window.scrollY)
+            );
+        });
+    }
+
+    // Restore scroll position after page reload
+    window.addEventListener("load", function () {
+        const savedScroll = sessionStorage.getItem(scrollKey);
+
+        if (savedScroll !== null) {
+            requestAnimationFrame(function () {
+                window.scrollTo(0, Number(savedScroll));
+                sessionStorage.removeItem(scrollKey);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
